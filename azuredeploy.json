@@ -1,0 +1,138 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "siteName": {
+      "type": "string"
+    },
+    "hostingPlanName": {
+      "type": "string"
+    },
+    "siteLocation": {
+      "type": "string"
+    },
+    "sku": {
+      "type": "string",
+      "allowedValues": [
+        "Free",
+        "Shared",
+        "Basic",
+        "Standard"
+      ],
+      "defaultValue": "Free"
+    },
+    "workerSize": {
+      "type": "string",
+      "allowedValues": [
+        "0",
+        "1",
+        "2"
+      ],
+      "defaultValue": "0"
+    },
+    "clientId": {
+      "type": "string",
+      "defaultValue": "the client ID for this application configured in your Azure Active Directory tenant"
+    },
+    "appKey": {
+      "type": "string",
+      "defaultValue": "the application key for this application configured in your Azure Active Directory tenant"
+    },
+    "tenantId": {
+      "type": "string",
+      "defaultValue": "the ID of your Azure Active Directory tenant"
+    },
+    "defaultRedirect": {
+      "type": "string",
+      "defaultValue": "the URL to redirect to if the application name is not found or an error occurs"
+    },
+    "appCacheSeconds": {
+      "type": "int",
+      "defaultValue": "60"
+    },
+    "repoUrl": {
+      "type": "string"
+    },
+    "branch": {
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2014-06-01",
+      "name": "[parameters('hostingPlanName')]",
+      "type": "Microsoft.Web/serverFarms",
+      "location": "[parameters('siteLocation')]",
+      "properties": {
+        "name": "[parameters('hostingPlanName')]",
+        "sku": "[parameters('sku')]",
+        "workerSize": "[parameters('workerSize')]",
+        "numberOfWorkers": 1
+      }
+    },
+    {
+      "apiVersion": "2014-06-01",
+      "name": "[parameters('siteName')]",
+      "type": "Microsoft.Web/Sites",
+      "location": "[parameters('siteLocation')]",
+      "dependsOn": [
+        "[concat('Microsoft.Web/serverFarms/', parameters('hostingPlanName'))]"
+      ],
+      "tags": {
+        "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]": "empty"
+      },
+      "properties": {
+        "name": "[parameters('siteName')]",
+        "serverFarm": "[parameters('hostingPlanName')]"
+      },
+      "resources": [
+        {
+          "apiVersion": "2014-04-01",
+          "type": "config",
+          "name": "web",
+          "dependsOn": [
+            "[concat('Microsoft.Web/Sites/', parameters('siteName'))]"
+          ],
+          "properties": {
+            "appSettings": [
+              {
+                "name": "apr:ClientId",
+                "value": "[parameters('clientId')]"
+              },
+              {
+                "name": "apr:AppKey",
+                "value": "[parameters('appKey')]"
+              },
+              {
+                "name": "apr:TenantId",
+                "value": "[parameters('tenantId')]"
+              },
+              {
+                "name": "apr:DefaultRedirect",
+                "value": "[parameters('defaultRedirect')]"
+              },
+              {
+                "name": "apr:AppCacheSeconds",
+                "value": "[parameters('appCacheSeconds')]"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "2014-04-01",
+          "name": "web",
+          "type": "sourcecontrols",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites', parameters('siteName'))]",
+            "[concat('Microsoft.Web/Sites/', parameters('siteName'), '/config/web')]"
+          ],
+          "properties": {
+            "RepoUrl": "[parameters('repoUrl')]",
+            "branch": "[parameters('branch')]",
+            "IsManualIntegration": true
+          }
+        }
+      ]
+    }
+  ]
+}
