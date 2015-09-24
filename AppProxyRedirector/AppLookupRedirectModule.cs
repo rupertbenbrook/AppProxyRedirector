@@ -26,25 +26,35 @@ namespace AppProxyRedirector
 
         private async Task OnBeginRequestAsync(object sender, EventArgs e)
         {
-            var name = GetApplicationNameFromRequest();
-            var applications = await GetAppProxyApplications();
-            var application = applications.FirstOrDefault(a => IsMatchingApplication(a, name));
             var redirect = Constants.DefaultRedirect;
-            if (application != null)
+            try
             {
-                redirect = application.Homepage;
-                _telemetry.TrackEvent("RedirectingToApplication", new Dictionary<string, string> {
+                var name = GetApplicationNameFromRequest();
+                var applications = await GetAppProxyApplications();
+                var application = applications.FirstOrDefault(a => IsMatchingApplication(a, name));
+                if (application != null)
+                {
+                    redirect = application.Homepage;
+                    _telemetry.TrackEvent("RedirectingToApplication", new Dictionary<string, string> {
                     { "DisplayName", application.DisplayName },
                     { "Homepage", application.Homepage }
                 });
-            }
-            else
-            {
-                _telemetry.TrackEvent("RedirectingToDefault", new Dictionary<string, string> {
+                }
+                else
+                {
+                    _telemetry.TrackEvent("RedirectingToDefault", new Dictionary<string, string> {
                     { "NameUsed", name }
                 });
+                }
             }
-            RedirectTo(redirect);
+            catch (Exception ex)
+            {
+                _telemetry.TrackException(ex);
+            }
+            finally
+            {
+                RedirectTo(redirect);
+            }
         }
 
         private void RedirectTo(string redirect)
