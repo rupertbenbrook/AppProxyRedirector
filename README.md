@@ -1,7 +1,7 @@
 # AppProxyRedirector
 A simple Azure Web App to redirect requests to the Azure Active Directory App Proxy applications configured in an Azure Active Directory tenant.
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://azuredeploy.net/?branch=release)
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://azuredeploy.net/)
 
 So why is this project needed? Well, when you publish an Azure App Proxy application it gets an access URL assigned to it in the format `https://*<name of app>*-*<name of tenant>*.msappproxy.net/`. It is then possible to create a CNAME record in DNS, and upload an appropriate certificate for this CNAME so that the URL for the application is in the domain of your choice. However, what if you're publishing many applications within your organisation? Do you want to go through configuring a CNAME record and certificate for each application? What if there are hundreds of application? This project can provide a solution.
 
